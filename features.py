@@ -53,6 +53,8 @@ def extract_color_features(image, cspace='RGB', spatial_size=(32, 32),
             feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
         elif cspace == 'YUV':
             feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+        elif cspace == 'YCrCb':
+            feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
     else: feature_image = np.copy(image)      
     # Apply bin_spatial() to get spatial color features
     spatial_features = bin_spatial(feature_image, size=spatial_size)
@@ -95,7 +97,7 @@ def extract_features(image):
     ### TODO: Tweak these parameters and see how the results change.
     spatial = 32
     histbin = 32
-    colorspace = 'HLS' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
     orient = 9
     pix_per_cell = 8
     cell_per_block = 2
