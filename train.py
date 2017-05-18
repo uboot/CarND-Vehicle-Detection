@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from skimage.feature import hog
 
+from features import extract_features
+
 # NOTE: the next import is only valid 
 # for scikit-learn version <= 0.17
 # if you are using scikit-learn >= 0.18 then use this:
@@ -124,52 +126,19 @@ def extract_color_features(imgs, cspace='RGB', spatial_size=(32, 32),
     # Return list of feature vectors
     return features
 
-def extract_features(cars, notcars, color=True, hog=True):
-    ### TODO: Tweak these parameters and see how the results change.
-    spatial = 32
-    histbin = 32
-    colorspace = 'HLS' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
-    hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-    
-    print('Using spatial binning of:',spatial,
-        'and', histbin,'histogram bins')
-    print('Using:',orient,'orientations',pix_per_cell,
-        'pixels per cell and', cell_per_block,'cells per block')
-    
+def collect_data(cars, notcars):
     car_features = []
+    for file in cars:
+        # Read in each one by one
+        image = mpimg.imread(file)
+        car_features.append(extract_features(image))
+        
     notcar_features = []
-    if color:
-        f = extract_color_features(cars, cspace=colorspace, 
-                                   spatial_size=(spatial, spatial),
-                                   hist_bins=histbin, hist_range=(0, 256))
-        car_features.append(f)
+    for file in notcars:
+        # Read in each one by one
+        image = mpimg.imread(file)
+        notcar_features.append(extract_features(image))
         
-        f = extract_color_features(notcars, cspace=colorspace,
-                                   spatial_size=(spatial, spatial),
-                                   hist_bins=histbin, hist_range=(0, 256))
-        notcar_features.append(f)
-    
-    if hog:
-        f = extract_hog_features(cars, cspace=colorspace, orient=orient, 
-                                 pix_per_cell=pix_per_cell, 
-                                 cell_per_block=cell_per_block, 
-                                 hog_channel=hog_channel)
-        car_features.append(f)
-        
-        
-        f = extract_hog_features(notcars, cspace=colorspace, orient=orient, 
-                                 pix_per_cell=pix_per_cell, 
-                                 cell_per_block=cell_per_block, 
-                                 hog_channel=hog_channel)
-        notcar_features.append(f)
-    
-    car_features = np.hstack(car_features)
-    notcar_features = np.hstack(notcar_features)
-    
-
     # Create an array stack of feature vectors
     X = np.vstack((car_features, notcar_features)).astype(np.float64)           
     
@@ -195,7 +164,7 @@ print('# cars:', len(cars))
 print('# not cars:', len(notcars))
 
 # Compute the features
-X, y = extract_features(cars, notcars, hog=True, color=True)
+X, y = collect_data(cars, notcars)
              
 # Fit a per-column scaler
 X_scaler = StandardScaler().fit(X)
