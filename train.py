@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 import glob
 import time
+
+from sklearn.externals import joblib
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -187,9 +189,8 @@ notcars = []
 for image_file in non_vehicles:
     notcars.append(image_file)
     
-sample_size = 2000
-cars = shuffle(cars)[0:sample_size]
-notcars = shuffle(notcars)[0:sample_size]
+cars = shuffle(cars)
+notcars = shuffle(notcars)
 print('# cars:', len(cars))
 print('# not cars:', len(notcars))
 
@@ -213,6 +214,10 @@ svc = LinearSVC()
 t=time.time()
 svc.fit(X_train, y_train)
 t2 = time.time()
+
+# save the model
+joblib.dump(svc, 'model.pkl') 
+
 print(round(t2-t, 2), 'Seconds to train SVC...')
 # Check the score of the SVC
 print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
@@ -223,5 +228,4 @@ print('My SVC predicts: ', svc.predict(X_test[0:n_predict]))
 print('For these',n_predict, 'labels: ', y_test[0:n_predict])
 t2 = time.time()
 print(round(t2-t, 5), 'Seconds to predict', n_predict,'labels with SVC')
-
 
