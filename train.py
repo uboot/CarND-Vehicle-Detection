@@ -217,6 +217,7 @@ t2 = time.time()
 
 # save the model
 joblib.dump(svc, 'model.pkl') 
+joblib.dump(X_scaler, 'scaler.pkl') 
 
 print(round(t2-t, 2), 'Seconds to train SVC...')
 # Check the score of the SVC
