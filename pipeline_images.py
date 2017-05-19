@@ -9,7 +9,7 @@ import cv2
 
 from sklearn.externals import joblib
 
-from features import extract_features
+from features import extract_features, extract_window_features
 
 # Define a function that takes an image,
 # start and stop positions in both x and y, 
@@ -71,23 +71,20 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
 # Define a function you will pass an image 
 # and the list of windows to be searched (output of slide_windows())
 def search_windows(img, windows, clf, scaler):
+    ystart = 400
+    ystop = 656
+    
     #1) Create an empty list to receive positive detection windows
     on_windows = []
     #2) Iterate over all windows in the list
-    for window in windows:
-        #3) Extract the test window from original image
-        test_img = cv2.resize(img[window[0][1]:window[1][1],
-                                  window[0][0]:window[1][0]], (64, 64))      
-        #4) Extract features for that window using single_img_features()
-        features = extract_features(test_img)
-        #5) Scale extracted features to be fed to classifier
+    generator = extract_window_features(img, x_start_stop=[None, None], 
+                                        y_start_stop=[ystart, ystop], 
+                                        scale=64/96, xy_overlap=(0.5, 0.5))
+    for window, features in generator:
         test_features = scaler.transform(np.array(features).reshape(1, -1))
-        #6) Predict using your classifier
         prediction = clf.predict(test_features)
-        #7) If positive (prediction == 1) then save the window
         if prediction == 1:
             on_windows.append(window)
-    #8) Return windows for positive detections
     return on_windows
     
 svc = joblib.load('model.pkl') 
@@ -105,7 +102,6 @@ for fname in glob.glob('test_images/*.jpg'):
     
     ystart = 400
     ystop = 656
-    scale = 1.5
     
     imshape = image.shape
     #image = cv2.resize(image, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
