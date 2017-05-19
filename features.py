@@ -111,7 +111,7 @@ def extract_features(image):
 
 def extract_window_features(img, x_start_stop=[None, None], 
                             y_start_stop=[None, None], scale=64/96,
-                            xy_overlap=(0.5, 0.5)):
+                            cells_per_step=2):
 
     spatial = 32
     histbin = 32
@@ -139,7 +139,6 @@ def extract_window_features(img, x_start_stop=[None, None],
     feature_image = cv2.resize(feature_image, new_size)   
     
     # If x and/or y start/stop positions not defined, set to image size
-    xy_window=(64, 64)
     if x_start_stop[0] == None:
         x_start_stop[0] = 0
     if x_start_stop[1] == None:
@@ -149,52 +148,68 @@ def extract_window_features(img, x_start_stop=[None, None],
     if y_start_stop[1] == None:
         y_start_stop[1] = img.shape[0]
         
-    # Compute the span of the region to be searched    
-    xspan = np.int((x_start_stop[1] - x_start_stop[0]) * scale)
-    yspan = np.int((y_start_stop[1] - y_start_stop[0]) * scale)
-    # Compute the number of pixels per step in x/y
-    nx_pix_per_step = np.int(xy_window[0]*(1 - xy_overlap[0]))
-    ny_pix_per_step = np.int(xy_window[1]*(1 - xy_overlap[1]))
-    # Compute the number of windows in x/y
-    nx_buffer = np.int(xy_window[0]*(xy_overlap[0]))
-    ny_buffer = np.int(xy_window[1]*(xy_overlap[1]))
-    nx_windows = np.int((xspan-nx_buffer)/nx_pix_per_step) 
-    ny_windows = np.int((yspan-ny_buffer)/ny_pix_per_step) 
+    rescaled_x_start_stop = (np.int(x_start_stop[0]*scale), np.int(x_start_stop[1]*scale))
+    rescaled_y_start_stop = (np.int(y_start_stop[0]*scale), np.int(y_start_stop[1]*scale))
     
-    # Loop through finding x and y window positions
-    # Note: you could vectorize this step, but in practice
-    # you'll be considering windows one by one with your
-    # classifier, so looping makes sense
-    for ys in range(ny_windows):
-        for xs in range(nx_windows):
-            # Calculate window position
-            startx = xs*nx_pix_per_step + np.int(x_start_stop[0]*scale)
-            endx = startx + xy_window[0]
-            starty = ys*ny_pix_per_step + np.int(y_start_stop[0]*scale)
-            endy = starty + xy_window[1]
-            window = ((startx, starty), (endx, endy))
+    # Define blocks and steps as above
+    nxblocks = (feature_image.shape[1] // pix_per_cell) - cell_per_block + 1
+    nyblocks = (feature_image.shape[0] // pix_per_cell) - cell_per_block + 1 
+    #nfeat_per_block = orient*cell_per_block**2
+    
+    # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
+    window = 64
+    nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
+    nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
+    nysteps = (nyblocks - nblocks_per_window) // cells_per_step
+    
+    hog_channels = []
+    if hog_channel == 'ALL':
+        for channel in range(feature_image.shape[2]):
+            f = get_hog_features(feature_image[:,:,channel], orient, 
+                                 pix_per_cell, cell_per_block, 
+                                 feature_vec=False)
+            hog_channels.append(f)      
+    else:
+        f = get_hog_features(feature_image[:,:,hog_channel], orient, 
+                             pix_per_cell, cell_per_block, 
+                             feature_vec=False)
+        hog_channels.append(f)
+        
+    for xb in range(nxsteps):
+        for yb in range(nysteps):
+            ypos = yb*cells_per_step
+            xpos = xb*cells_per_step
             
-            patch = feature_image[window[0][1]:window[1][1], window[0][0]:window[1][0]]
-    
+            xleft = xpos*pix_per_cell
+            ytop = ypos*pix_per_cell
+            xright = xleft+window
+            ybottom = ytop+window
+            
+            if xleft < rescaled_x_start_stop[0]:
+                continue
+            if xright > rescaled_x_start_stop[1]:
+                continue
+            if ytop < rescaled_y_start_stop[0]:
+                continue
+            if ybottom > rescaled_y_start_stop[1]:
+                continue
+            
+            hog_features = []
+            for hog_channel in hog_channels:
+                hog_features.append(hog_channel[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel())
+            hog_features = np.hstack(hog_features)
+
+
+            # Extract the image patch
+            patch = feature_image[ytop:ybottom, xleft:xright]
+            
+            # Get color features
             spatial_features = bin_spatial(patch, size=(spatial, spatial))
             hist_features = color_hist(patch, nbins=histbin, bins_range=(0, 256))
-            
-            if hog_channel == 'ALL':
-                hog_features = []
-                for channel in range(patch.shape[2]):
-                    f = get_hog_features(patch[:,:,channel], orient, 
-                                         pix_per_cell, cell_per_block, 
-                                         feature_vec=True)
-                    hog_features.append(f)
-                hog_features = np.ravel(hog_features)        
-            else:
-                f = get_hog_features(patch[:,:,hog_channel], orient, 
-                                     pix_per_cell, cell_per_block, 
-                                     feature_vec=True)
-                hog_features.append(f)
-            
-            rescaled_window = ((np.int(window[0][0]/scale), np.int(window[0][1]/scale)),
-                               (np.int(window[1][0]/scale), np.int(window[1][1]/scale)))
             features = np.concatenate((spatial_features, hist_features, hog_features))
-            yield rescaled_window, features
 
+            rescaled_window = ((np.int(xleft/scale), np.int(ytop/scale)),
+                               (np.int(xright/scale), np.int(ybottom/scale)))
+            
+            yield rescaled_window, features
+        
