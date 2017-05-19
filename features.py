@@ -5,6 +5,13 @@ import numpy as np
 import cv2
 from skimage.feature import hog
 
+spatial = 32
+histbin = 32
+colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+orient = 9
+pix_per_cell = 8
+cell_per_block = 2
+hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 
 # Define a function to compute binned color features  
 def bin_spatial(img, size=(32, 32)):
@@ -85,14 +92,13 @@ def extract_hog_features(image, cspace='RGB', orient=9,
     return hog_features
 
 def extract_features(image):
-    ### TODO: Tweak these parameters and see how the results change.
-    spatial = 32
-    histbin = 32
-    colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
-    hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
+    global spatial
+    global histbin
+    global colorspace
+    global orient
+    global pix_per_cell
+    global cell_per_block
+    global hog_channel
     
     hog_features = extract_hog_features(image, 
                                         cspace=colorspace, 
@@ -112,15 +118,13 @@ def extract_features(image):
 def extract_window_features(img, x_start_stop=[None, None], 
                             y_start_stop=[None, None], scale=64/96,
                             cells_per_step=2):
-
-    spatial = 32
-    histbin = 32
-    colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
-    hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
-    
+    global spatial
+    global histbin
+    global colorspace
+    global orient
+    global pix_per_cell
+    global cell_per_block
+    global hog_channel
     
     if colorspace != 'RGB':
         if colorspace == 'HSV':
@@ -162,18 +166,18 @@ def extract_window_features(img, x_start_stop=[None, None],
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     
-    hog_channels = []
+    hog_features_channels = []
     if hog_channel == 'ALL':
         for channel in range(feature_image.shape[2]):
             f = get_hog_features(feature_image[:,:,channel], orient, 
                                  pix_per_cell, cell_per_block, 
                                  feature_vec=False)
-            hog_channels.append(f)      
+            hog_features_channels.append(f)      
     else:
         f = get_hog_features(feature_image[:,:,hog_channel], orient, 
                              pix_per_cell, cell_per_block, 
                              feature_vec=False)
-        hog_channels.append(f)
+        hog_features_channels.append(f)
         
     for xb in range(nxsteps):
         for yb in range(nysteps):
@@ -195,8 +199,9 @@ def extract_window_features(img, x_start_stop=[None, None],
                 continue
             
             hog_features = []
-            for hog_channel in hog_channels:
-                hog_features.append(hog_channel[ypos:ypos+nblocks_per_window, xpos:xpos+nblocks_per_window].ravel())
+            for hog_features_channel in hog_features_channels:
+                hog_features.append(hog_features_channel[ypos:ypos+nblocks_per_window, 
+                                                         xpos:xpos+nblocks_per_window].ravel())
             hog_features = np.hstack(hog_features)
 
 
