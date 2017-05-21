@@ -4,7 +4,6 @@
 import glob
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.externals import joblib
 
 from vehicle_detection import compute_heatmap, compute_bboxes, draw_boxes
