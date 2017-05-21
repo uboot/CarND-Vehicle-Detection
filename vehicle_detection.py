@@ -59,8 +59,7 @@ def compute_heatmap(img, svc, scaler):
     
     return heat
 
-def compute_bboxes(heatmap):
-    threshold = 1
+def compute_bboxes(heatmap, threshold=1):
     heatmap[heatmap <= threshold] = 0
     labels = label(heatmap)
     bboxes = bboxes_for_labels(labels) 
