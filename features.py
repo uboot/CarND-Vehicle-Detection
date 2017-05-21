@@ -128,16 +128,16 @@ def extract_window_features(img, x_start_stop=[None, None],
     
     if colorspace != 'RGB':
         if colorspace == 'HSV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+            transformed = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
         elif colorspace == 'LUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+            transformed = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
         elif colorspace == 'HLS':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+            transformed = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
         elif colorspace == 'YUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
+            transformed = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
         elif colorspace == 'YCrCb':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    else: feature_image = np.copy(img)
+            transformed = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
+    else: transformed = np.copy(img)
     
     
     # If x and/or y start/stop positions not defined, set to image size
@@ -150,8 +150,8 @@ def extract_window_features(img, x_start_stop=[None, None],
     if y_start_stop[1] == None:
         y_start_stop[1] = img.shape[0]
         
-    clipped = img[y_start_stop[0]:y_start_stop[1],
-                  x_start_stop[0]:x_start_stop[1], :]
+    clipped = transformed[y_start_stop[0]:y_start_stop[1],
+                          x_start_stop[0]:x_start_stop[1], :]
     
     new_size = (int(clipped.shape[1]*scale), int(clipped.shape[0]*scale))
     feature_image = cv2.resize(clipped, new_size)   
