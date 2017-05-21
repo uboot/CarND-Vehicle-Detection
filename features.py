@@ -139,8 +139,6 @@ def extract_window_features(img, x_start_stop=[None, None],
             feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
     else: feature_image = np.copy(img)
     
-    new_size = (int(img.shape[1]*scale), int(img.shape[0]*scale))
-    feature_image = cv2.resize(feature_image, new_size)   
     
     # If x and/or y start/stop positions not defined, set to image size
     if x_start_stop[0] == None:
@@ -152,8 +150,11 @@ def extract_window_features(img, x_start_stop=[None, None],
     if y_start_stop[1] == None:
         y_start_stop[1] = img.shape[0]
         
-    rescaled_x_start_stop = (np.int(x_start_stop[0]*scale), np.int(x_start_stop[1]*scale))
-    rescaled_y_start_stop = (np.int(y_start_stop[0]*scale), np.int(y_start_stop[1]*scale))
+    clipped = img[y_start_stop[0]:y_start_stop[1],
+                  x_start_stop[0]:x_start_stop[1], :]
+    
+    new_size = (int(clipped.shape[1]*scale), int(clipped.shape[0]*scale))
+    feature_image = cv2.resize(clipped, new_size)   
     
     # Define blocks and steps as above
     nxblocks = (feature_image.shape[1] // pix_per_cell) - cell_per_block + 1
@@ -189,15 +190,6 @@ def extract_window_features(img, x_start_stop=[None, None],
             xright = xleft+window
             ybottom = ytop+window
             
-            if xleft < rescaled_x_start_stop[0]:
-                continue
-            if xright > rescaled_x_start_stop[1]:
-                continue
-            if ytop < rescaled_y_start_stop[0]:
-                continue
-            if ybottom > rescaled_y_start_stop[1]:
-                continue
-            
             hog_features = []
             for hog_features_channel in hog_features_channels:
                 hog_features.append(hog_features_channel[ypos:ypos+nblocks_per_window, 
@@ -213,8 +205,10 @@ def extract_window_features(img, x_start_stop=[None, None],
             hist_features = color_hist(patch, nbins=histbin, bins_range=(0, 256))
             features = np.concatenate((spatial_features, hist_features, hog_features))
 
-            rescaled_window = ((np.int(xleft/scale), np.int(ytop/scale)),
-                               (np.int(xright/scale), np.int(ybottom/scale)))
+            remapped_window = ((np.int(xleft/scale) + x_start_stop[0],
+                                np.int(ytop/scale) + y_start_stop[0]),
+                               (np.int(xright/scale)+ x_start_stop[0], 
+                                np.int(ybottom/scale) + y_start_stop[0]))
             
-            yield rescaled_window, features
+            yield remapped_window, features
         

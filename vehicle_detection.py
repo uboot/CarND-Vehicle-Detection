@@ -6,6 +6,9 @@ import numpy as np
 from scipy.ndimage.measurements import label
 from sklearn.externals import joblib
 
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+
 from features import extract_window_features
 
 def add_heat(heatmap, bbox_list):
@@ -43,7 +46,7 @@ def search_windows(img, clf, scaler):
     on_windows = []
     #2) Iterate over all windows in the list
     generator = extract_window_features(img, x_start_stop=[None, None], 
-                                        y_start_stop=[ystart, ystop], 
+                                        y_start_stop=[None, None], 
                                         scale=64/96, cells_per_step=2)
     for window, features in generator:
         test_features = scaler.transform(np.array(features).reshape(1, -1))
@@ -54,6 +57,9 @@ def search_windows(img, clf, scaler):
 
 def compute_heatmap(img, svc, scaler):
     hot_windows = search_windows(img, svc, scaler)
+    box_image = draw_boxes(img, hot_windows)
+    plt.imshow(box_image)
+    plt.show()
     heat = np.zeros_like(img[:,:,0]).astype(np.float)        
     heat = add_heat(heat, hot_windows)   
     
