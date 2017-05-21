@@ -24,12 +24,14 @@ def collect_data(cars, notcars):
     for file in cars:
         # Read in each one by one
         image = mpimg.imread(file)
+        image = (255*image).astype(np.ubyte)
         car_features.append(extract_features(image))
         
     notcar_features = []
     for file in notcars:
         # Read in each one by one
         image = mpimg.imread(file)
+        image = (255*image).astype(np.ubyte)
         notcar_features.append(extract_features(image))
         
     # Create an array stack of feature vectors
