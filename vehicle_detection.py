@@ -32,15 +32,29 @@ def bboxes_for_labels(labels):
     # Return the bounding boxes
     return bboxes
     
-# Define a function you will pass an image 
-# and the list of windows to be searched (output of slide_windows())
 def search_windows(img, clf, scaler):
+    """
+    Moves sliding windows on two different scales over the image and returns
+    those windows which contain features classified as 'car'.
+    """
     ystart = 400
     ystop = 656
     
-    #1) Create an empty list to receive positive detection windows
+    # Create an empty list to receive positive detection windows
     on_windows = []
-    #2) Iterate over all windows in the list
+    
+    # Iterate over all windows in the image on the original scale and classify
+    # the features. Append the positive classification results.
+    generator = extract_window_features(img, x_start_stop=[None, None], 
+                                        y_start_stop=[ystart, ystop], 
+                                        scale=64/64, cells_per_step=2)
+    for window, features in generator:
+        test_features = scaler.transform(np.array(features).reshape(1, -1))
+        prediction = clf.predict(test_features)
+        if prediction == 1:
+            on_windows.append(window)
+            
+    # Do the same for on a lower scale.
     generator = extract_window_features(img, x_start_stop=[None, None], 
                                         y_start_stop=[ystart, ystop], 
                                         scale=64/96, cells_per_step=2)
@@ -49,23 +63,40 @@ def search_windows(img, clf, scaler):
         prediction = clf.predict(test_features)
         if prediction == 1:
             on_windows.append(window)
+            
     return on_windows
 
 def compute_heatmap(img, svc, scaler):
+    """
+    Computes the heatmap of the classification of the regions of 'img' with the
+    given classifier
+    """
+    # Do the classification (this is an expensive operation)
     hot_windows = search_windows(img, svc, scaler)
-    box_image = draw_boxes(img, hot_windows)
+    
+    # Some up the positive areas
     heat = np.zeros_like(img[:,:,0]).astype(np.float)        
     heat = add_heat(heat, hot_windows)   
     
     return heat
 
-def compute_bboxes(heatmap, threshold=1):
+def compute_bboxes(heatmap, threshold=2):
+    """
+    Computes bounding boxes from the input heatmap.
+    """
+    # Remove everything below the threshold
     heatmap[heatmap <= threshold] = 0
+    
+    # Now look for connected regions and their bounding boxes
     labels = label(heatmap)
     bboxes = bboxes_for_labels(labels) 
+    
     return bboxes
 
 def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
+    """
+    Draws boxes onto an image.
+    """
     # Make a copy of the image
     imcopy = np.copy(img)
     # Iterate through the bounding boxes

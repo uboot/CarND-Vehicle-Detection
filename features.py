@@ -13,15 +13,21 @@ pix_per_cell = 8
 cell_per_block = 2
 hog_channel = 'ALL' # Can be 0, 1, 2, or "ALL"
 
-# Define a function to compute binned color features  
 def bin_spatial(img, size=(32, 32)):
+    """
+    Computes binned color features
+    """
+    
     # Use cv2.resize().ravel() to create the feature vector
     features = cv2.resize(img, size).ravel() 
     # Return the feature vector
     return features
 
-# Define a function to compute color histogram features  
 def color_hist(img, nbins=32, bins_range=(0, 256)):
+    """
+    Computes color histogram features
+    """
+    
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
     channel2_hist = np.histogram(img[:,:,1], bins=nbins, range=bins_range)
@@ -31,9 +37,12 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
-# Define a function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                      feature_vec=True):
+    """
+    Computes HOG features
+    """
+    
     features = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
                    cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=True, 
                    visualise=False, feature_vector=feature_vec)
@@ -41,7 +50,12 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
     
 def extract_color_features(image, cspace='RGB', spatial_size=(32, 32),
                            hist_bins=32, hist_range=(0, 256)):
-    # apply color conversion if other than 'RGB'
+    """
+    Converts 'image' to the given color space and extracts binned color
+    features and histogram color features
+    """
+    
+    # Apply color conversion if other than 'RGB'
     if cspace != 'RGB':
         if cspace == 'HSV':
             feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -58,12 +72,17 @@ def extract_color_features(image, cspace='RGB', spatial_size=(32, 32),
     spatial_features = bin_spatial(feature_image, size=spatial_size)
     # Apply color_hist() also with a color space option now
     hist_features = color_hist(feature_image, nbins=hist_bins, bins_range=hist_range)
-    
+    # Combine these features
     return np.concatenate((spatial_features, hist_features))
     
 def extract_hog_features(image, cspace='RGB', orient=9, 
                          pix_per_cell=8, cell_per_block=2, hog_channel=0):
-    # apply color conversion if other than 'RGB'
+    """
+    Converts 'image' to the given color space and extracts HOG features for the
+    given color channel (or all color channels)
+    """
+    
+    # Apply color conversion if other than 'RGB'
     if cspace != 'RGB':
         if cspace == 'HSV':
             feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
@@ -79,6 +98,7 @@ def extract_hog_features(image, cspace='RGB', orient=9,
 
     # Call get_hog_features() with vis=False, feature_vec=True
     if hog_channel == 'ALL':
+        # Concatenate the HOG features for each color channel
         hog_features = []
         for channel in range(feature_image.shape[2]):
             hog_features.append(get_hog_features(feature_image[:,:,channel], 
@@ -92,6 +112,11 @@ def extract_hog_features(image, cspace='RGB', orient=9,
     return hog_features
 
 def extract_features(image):
+    """
+    Extracts the HOG and color features from 'image'. The parameters for the
+    feature extraction are set to the global values defined in this module.
+    """
+    
     global spatial
     global histbin
     global colorspace
@@ -118,6 +143,15 @@ def extract_features(image):
 def extract_window_features(img, x_start_stop=[None, None], 
                             y_start_stop=[None, None], scale=64/96,
                             cells_per_step=2):
+    """
+    Generator function which generates a sequence of windows sliding over the
+    given area of the input image. It extracts the HOG and color features for 
+    each window and yields the feature vector. The parameters for the
+    feature extraction are set to the global values defined in this module.
+    Thus, the feature vectors are comparable the vectors returned by the 
+    function extract_features().
+    """
+    
     global spatial
     global histbin
     global colorspace
@@ -126,6 +160,7 @@ def extract_window_features(img, x_start_stop=[None, None],
     global cell_per_block
     global hog_channel
     
+    # Convert to the given color space
     if colorspace != 'RGB':
         if colorspace == 'HSV':
             transformed = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
@@ -150,23 +185,28 @@ def extract_window_features(img, x_start_stop=[None, None],
     if y_start_stop[1] == None:
         y_start_stop[1] = img.shape[0]
         
+    # Clip to the given area
     clipped = transformed[y_start_stop[0]:y_start_stop[1],
                           x_start_stop[0]:x_start_stop[1], :]
     
+    # Rescale the image
     new_size = (int(clipped.shape[1]*scale), int(clipped.shape[0]*scale))
     feature_image = cv2.resize(clipped, new_size)   
     
-    # Define blocks and steps as above
+    # Compute the number of blocks which fit inside the image
     nxblocks = (feature_image.shape[1] // pix_per_cell) - cell_per_block + 1
     nyblocks = (feature_image.shape[0] // pix_per_cell) - cell_per_block + 1 
-    #nfeat_per_block = orient*cell_per_block**2
     
-    # 64 was the orginal sampling rate, with 8 cells and 8 pix per cell
-    window = 64
-    nblocks_per_window = (window // pix_per_cell) - cell_per_block + 1
+    # Compute the size of a window in pixels
+    window = 8 * pix_per_cell
+    
+    # Compute the number of sliding steps in each direction
+    nblocks_per_window = 8 - cell_per_block + 1
     nxsteps = (nxblocks - nblocks_per_window) // cells_per_step
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step
     
+    # Now compute (all) the HOG features for the selected and scaled image
+    # region
     hog_features_channels = []
     if hog_channel == 'ALL':
         for channel in range(feature_image.shape[2]):
@@ -180,6 +220,7 @@ def extract_window_features(img, x_start_stop=[None, None],
                              feature_vec=False)
         hog_features_channels.append(f)
         
+    # Extract the features for reach window from the precomputed HOG data
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb*cells_per_step
@@ -190,6 +231,7 @@ def extract_window_features(img, x_start_stop=[None, None],
             xright = xleft+window
             ybottom = ytop+window
             
+            # Select the HOG features for this window
             hog_features = []
             for hog_features_channel in hog_features_channels:
                 hog_features.append(hog_features_channel[ypos:ypos+nblocks_per_window, 
@@ -200,7 +242,7 @@ def extract_window_features(img, x_start_stop=[None, None],
             # Extract the image patch
             patch = feature_image[ytop:ybottom, xleft:xright]
             
-            # Get color features
+            # Compute color features
             spatial_features = bin_spatial(patch, size=(spatial, spatial))
             hist_features = color_hist(patch, nbins=histbin, bins_range=(0, 256))
             features = np.concatenate((spatial_features, hist_features, hog_features))
