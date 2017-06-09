@@ -12,8 +12,7 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 [image1]: ./examples/car_not_car.png
 [image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
+[image3]: ./windows.png
 [image5]: ./frames.png
 [image6]: ./labels.png
 [image7]: ./bboxes.png
@@ -62,7 +61,7 @@ The function `extract_window_features()` in the lines 143 through 255 in `featur
 
 Ultimately I searched on two scales (100% and 66%) using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4] INSERT NEW IMAGE
+![alt text][image3]
 ---
 
 ### Video Implementation

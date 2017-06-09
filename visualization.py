@@ -7,7 +7,7 @@ from moviepy.editor import VideoFileClip
 import numpy as np
 from scipy.ndimage.measurements import label
 
-from vehicle_detection import compute_heatmap, compute_bboxes, draw_boxes
+from vehicle_detection import compute_heatmap, compute_bboxes, draw_boxes, search_windows
 
 def process_image(image):
     global svc, X_scaler, heatmaps
@@ -16,7 +16,7 @@ def process_image(image):
         return image
     
     images.append(image)
-    boxes.append(search_windows(img, svc, scaler))
+    boxes.append(search_windows(image, svc, X_scaler))
     heatmaps.append(compute_heatmap(image, svc, X_scaler))
     if len(heatmaps) > 10:
         heatmaps.pop(0)
@@ -53,7 +53,7 @@ f, axarr = plt.subplots(2, 3, figsize=(24, 9))
 f.tight_layout()
 for i in range(2):
     for j in range(3):
-        axarr[i, j].imshow(draw_boxes(images[i*3 + j]), boxes[i*3 + j])
+        axarr[i, j].imshow(draw_boxes(images[i*3 + j], boxes[i*3 + j]))
 plt.show()
 
 heatmap = np.mean(np.array(heatmaps), axis=0)
