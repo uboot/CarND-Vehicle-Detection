@@ -27,7 +27,7 @@ Here I will consider the rubric points individually and describe how I addressed
 
 #### 1. Explain how (and identify where in your code) you extracted HOG and color features from the training images.
 
-The training step is implemented in `train.py`. I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+The training step is implemented in `train.py`. I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of each of these classes:
 
 ![alt text][image1]
 ![alt text][image2]
@@ -38,13 +38,13 @@ The parameters for the feature extraction are given in the globals in lines 8 th
 
 #### 2. Explain how you settled on your final choice of HOG and color feature parameters.
 
-I tried evaluated the classification accuracy on the test set for various combinations of parameters. It turned out that the initial settings of the HOG parameters (9 orientations, 8 pixels per cell and 2 block per cell, YCrCb color space) were quite good. Using all channels of the image improved the classification result significantly so I chose this approach. 
+I evaluated the classification accuracy on the test set for various combinations of parameters. It turned out that the initial settings of the HOG parameters (9 orientations, 8 pixels per cell and 2 block per cell, YCrCb color space) were quite good. Using all channels of the image improved the classification result significantly so I chose this approach. 
 
 I used 32 spatial and 32 histogram color features.
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using 80% of the XXXX training data in line 87 of `train.py`. Evaluating the resulting model on the remaining 20% test data in line 97 showed an accuracy of 99.4%.
+I trained a linear SVM using random 80% of the 17760 training data in line 87 of `train.py`. Evaluating the resulting model on the remaining 20% test data in line 97 showed an accuracy of 99.4%.
 
 ### Sliding Window Search
 
@@ -91,6 +91,6 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 The first step of the project was to train a classifier to distinguish between cars and other texture. It turned out fairly easy to get a classifier which performs better than 99% using HOG and color features and the relatively simple linear SVM. However, the my pipeline for vehicle detection is computationally expensive, i.e. it is not possible to process every frame in real time. Training a classifier which uses less expensive features and still performs well would be an improvement.
 
-Although my classifier has a high accuracy there are cases when false positives are detected on some frames or the detected boxes look wobbly. I think it would beneficial to develop a more advanced averaging over subsequent frames than simply adding the heat maps. On could look at the statistics of the bounding box corners an make sure that there are no outliers on single frames.
+Although my classifier has a high accuracy there are cases when false positives are detected on some frames or the detected boxes are wobbly. I think it would beneficial to develop a more advanced averaging over subsequent frames than simply adding the heat maps. One could look at the statistics of the bounding box corners an make sure that there are no visual outliers on single frames.
 
 
