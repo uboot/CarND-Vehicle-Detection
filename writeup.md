@@ -10,15 +10,15 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
+[image1]: ./car.png
+[image2]: ./not_car.jpg
 [image3]: ./windows.png
 [image5]: ./frames.png
 [image6]: ./labels.png
 [image7]: ./bboxes.png
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
 ### Writeup / README
@@ -34,12 +34,11 @@ You're reading it!
 The training step is implemented in `train.py`. I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
+![alt text][image2]
 
 The script then calls the function `extract_features()` in lines 33 and 40 to compute all image image features. This function is implemented in the module of the module `features.py`. There the HOG features are computed in the lines 78 through 112. In addition to the HOG features I computed spatial color features and color histograms in the lines 16-76.
 
 The parameters for the feature extraction are given in the globals in lines 8 through 14. I explored different settings by changing these values. In case of `skimage.hog()` these are `orient`, `pixels_per_cell`, `hog_channel`, and `cells_per_block`. The color features are determined by `spatial` and `histbin`. I used the same `colorspace` for the HOG and color features.
-
-![alt text][image2]
 
 #### 2. Explain how you settled on your final choice of HOG and color feature parameters.
 
@@ -49,7 +48,7 @@ I used 32 spatial and 32 histogram color features.
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using 80% of the XXXX training data in line 87 of `train.py`. Evaluating the resulting model on the remaining 20% test data in line 97 showed an accuracy of XXXX%.
+I trained a linear SVM using 80% of the XXXX training data in line 87 of `train.py`. Evaluating the resulting model on the remaining 20% test data in line 97 showed an accuracy of 99.4%.
 
 ### Sliding Window Search
 
@@ -94,5 +93,8 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+The first step of the project was to train a classifier to distinguish between cars and other texture. It turned out fairly easy to get a classifier which performs better than 99% using HOG and color features and the relatively simple linear SVM. However, the my pipeline for vehicle detection is computationally expensive, i.e. it is not possible to process every frame in real time. Training a classifier which uses less expensive features and still performs well would be an improvement.
+
+Although my classifier has a high accuracy there are cases when false positives are detected on some frames or the detected boxes look wobbly. I think it would beneficial to develop a more advanced averaging over subsequent frames than simply adding the heat maps. On could look at the statistics of the bounding box corners an make sure that there are no outliers on single frames.
+
 
