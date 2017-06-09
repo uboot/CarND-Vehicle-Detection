@@ -20,6 +20,11 @@ from sklearn.model_selection import train_test_split
 #from sklearn.cross_validation import train_test_split
 
 def collect_data(cars, notcars):
+    """
+    Reads the image files in the lists 'cars' and 'notcars' and returns their
+    feature vectors and labels (car = 1, notcar = 0).
+    """
+    
     car_features = []
     for file in cars:
         # Read in each one by one
@@ -42,23 +47,25 @@ def collect_data(cars, notcars):
     
     return X, y
 
-# Read in car and non-car images
+# Collect the the file paths of all car images
 vehicles = glob.glob('training_data/vehicles/**/*.png')
 cars = []
 for image_file in vehicles:
     cars.append(image_file)
 
+# Collect the the file paths of all not car images
 non_vehicles = glob.glob('training_data/non-vehicles/**/*.png')
 notcars = []
 for image_file in non_vehicles:
     notcars.append(image_file)
-    
+
+# Shuffle them
 cars = shuffle(cars)
 notcars = shuffle(notcars)
 print('# cars:', len(cars))
 print('# not cars:', len(notcars))
 
-# Compute the features
+# Compute the features and labels
 X, y = collect_data(cars, notcars)
              
 # Fit a per-column scaler
@@ -71,18 +78,20 @@ rand_state = np.random.randint(0, 100)
 X_train, X_test, y_train, y_test = train_test_split(
     scaled_X, y, test_size=0.2, random_state=rand_state)
 
-print('Feature vector length:', len(X_train[0]))
 # Use a linear SVC 
+print('Feature vector length:', len(X_train[0]))
 svc = LinearSVC()
-# Check the training time for the SVC
+
+# Train and log the training time
 t=time.time()
 svc.fit(X_train, y_train)
 t2 = time.time()
 
-# save the model
+# Save the model
 joblib.dump(svc, 'model.pkl') 
 joblib.dump(X_scaler, 'scaler.pkl') 
 
+# Output the training time
 print(round(t2-t, 2), 'Seconds to train SVC...')
 # Check the score of the SVC
 print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))

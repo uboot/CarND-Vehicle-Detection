@@ -16,10 +16,12 @@ def process_image(image):
         return image
     
     images.append(image)
+    boxes.append(search_windows(img, svc, scaler))
     heatmaps.append(compute_heatmap(image, svc, X_scaler))
     if len(heatmaps) > 10:
         heatmaps.pop(0)
         images.pop(0)
+        boxes.pop(0)
     
     bboxes = compute_bboxes(np.mean(np.array(heatmaps), axis=0))
     box_image = draw_boxes(image, bboxes)
@@ -28,6 +30,7 @@ def process_image(image):
 svc = joblib.load('model.pkl') 
 X_scaler = joblib.load('scaler.pkl') 
 heatmaps=[]
+boxes=[]
 images=[]
 
 output_file = 'output.mp4'
@@ -44,6 +47,13 @@ for i in range(5):
         axarr[i, 2*j + 0].axis('off')
         axarr[i, 2*j + 1].imshow(heatmaps[5*j + i], cmap='hot')
         axarr[i, 2*j + 1].axis('off')
+plt.show()
+
+f, axarr = plt.subplots(2, 3, figsize=(24, 9))
+f.tight_layout()
+for i in range(2):
+    for j in range(3):
+        axarr[i, j].imshow(draw_boxes(images[i*3 + j]), boxes[i*3 + j])
 plt.show()
 
 heatmap = np.mean(np.array(heatmaps), axis=0)

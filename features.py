@@ -247,6 +247,8 @@ def extract_window_features(img, x_start_stop=[None, None],
             hist_features = color_hist(patch, nbins=histbin, bins_range=(0, 256))
             features = np.concatenate((spatial_features, hist_features, hog_features))
 
+            # Compute the window coordinates with respect to the geometry of the
+            # input image
             remapped_window = ((np.int(xleft/scale) + x_start_stop[0],
                                 np.int(ytop/scale) + y_start_stop[0]),
                                (np.int(xright/scale)+ x_start_stop[0], 
