@@ -91,6 +91,6 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 The first step of the project was to train a classifier to distinguish between cars and other texture. It turned out fairly easy to get a classifier which performs better than 99% using HOG and color features and the relatively simple linear SVM. However, the my pipeline for vehicle detection is computationally expensive, i.e. it is not possible to process every frame in real time. Training a classifier which uses less expensive features and still performs well would be an improvement.
 
-Although my classifier has a high accuracy there are cases when false positives are detected on some frames or the detected boxes are wobbly. I think it would beneficial to develop a more advanced averaging over subsequent frames than simply adding the heat maps. One could look at the statistics of the bounding box corners an make sure that there are no visual outliers on single frames.
+Although my classifier has a high accuracy there are cases when false positives are detected on some frames or the detected boxes are wobbly. I think it would beneficial to develop a more advanced averaging over subsequent frames than simply adding the heat maps. One could e.g. look at the statistics of the bounding box corners and remove outliers from this distribution.
 
 
